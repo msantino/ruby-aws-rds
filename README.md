@@ -18,8 +18,3 @@ Then runs scripts using ruby executable:
 ```sh
 $ ruby read_instance_logs.rb
 ```
-
-Then runs scripts using ruby executable:
-```sh
-$ ruby read_instance_logs.rb
-```
