@@ -18,18 +18,21 @@ db = Database.new(dbconfig)
 rds_logs = db.get_collection('rds_logs')
 
 cli = HighLine.new
-log_dir = ARGV[0] || '../logs'
-
 
 tmp_file = "/tmp/aws-profile.tmp"
 tmp_file_contents = Array.new
 File.open(tmp_file, 'a+').each { |line| tmp_file_contents << line.gsub(/[^a-zA-Z0-9\-]/,"") }
-log_dir = ARGV[0] || '../logs'
+log_dir = ENV['RDS_LOG_PATH'] || '../logs'
 
 # Solicita o profile desejado
-profile_name = cli.ask("Profile:  ") { |q| q.default = tmp_file_contents[0] || 'default' }
-puts "Profile escolhido: [#{profile_name}]",''
-File.open(tmp_file, 'w') { |file| file << profile_name }
+# Se a variavel for definida por ENV, usa ela. Caso contrario pede
+if ENV['RDS_PROFILE_NAME']
+  profile_name = ENV['RDS_PROFILE_NAME']
+else
+  profile_name = cli.ask("Profile:  ") { |q| q.default = tmp_file_contents[0] || 'default' }
+  puts "Profile escolhido: [#{profile_name}]",''
+  File.open(tmp_file, 'w') { |file| file << profile_name }
+end
 
 # Instancia o RDS do profile informado
 credentials = Aws::SharedCredentials.new(profile_name: profile_name)
@@ -49,9 +52,14 @@ instances.each do |instance|
 end
 puts
 
-instance_identifier = cli.ask("Instância?  ") { |q| q.default = tmp_file_contents[1] || instances[0].db_instance_identifier }
-puts "Instance-Identifier: [#{instance_identifier}]",''
-File.open(tmp_file, 'a') { |file| file << "\n#{instance_identifier}" }
+# Se a variavel for definida por ENV, usa ela. Caso contrario pede
+if ENV['RDS_INSTANCE_IDENTIFIER']
+  instance_identifier = ENV['RDS_INSTANCE_IDENTIFIER']
+else
+  instance_identifier = cli.ask("Instância?  ") { |q| q.default = tmp_file_contents[1] || instances[0].db_instance_identifier }
+  puts "Instance-Identifier: [#{instance_identifier}]",''
+  File.open(tmp_file, 'a') { |file| file << "\n#{instance_identifier}" }
+end
 
 # Garante a existencia do diretorio desejado
 log_dir = log_dir + '/' + instance_identifier
