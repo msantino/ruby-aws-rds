@@ -10,7 +10,7 @@ require_relative 'lib/rds_log'
 
 
 dbconfig = {
-    :host => 'localhost:27017',
+    :host => 'mongo:27017',
     :database => 'pg'
 }
 
@@ -26,6 +26,7 @@ log_dir = ENV['RDS_LOG_PATH'] || '../logs'
 
 # Solicita o profile desejado
 # Se a variavel for definida por ENV, usa ela. Caso contrario pede
+=begin
 if ENV['RDS_PROFILE_NAME']
   profile_name = ENV['RDS_PROFILE_NAME']
 else
@@ -33,11 +34,17 @@ else
   puts "Profile escolhido: [#{profile_name}]",''
   File.open(tmp_file, 'w') { |file| file << profile_name }
 end
+=end
+Aws.config.update(
+  region: 'sa-east-1'
+)
 
 # Instancia o RDS do profile informado
-credentials = Aws::SharedCredentials.new(profile_name: profile_name)
-rds = Aws::RDS::Client.new(credentials: credentials, region: 'sa-east-1')
+#credentials = Aws::SharedCredentials.new(profile_name: profile_name)
+#rds = Aws::RDS::Client.new(credentials: credentials, region: 'sa-east-1')
+rds = Aws::RDS::Client.new
 
+=begin
 # Identifica as instâncias existentes na região e confirma qual será usada
 instances = rds.describe_db_instances().db_instances
 if instances.size == 0
@@ -51,6 +58,7 @@ instances.each do |instance|
   puts "- #{instance.db_instance_identifier} [#{instance.db_instance_class}|#{instance.engine}]"
 end
 puts
+=end
 
 # Se a variavel for definida por ENV, usa ela. Caso contrario pede
 if ENV['RDS_INSTANCE_IDENTIFIER']
@@ -74,6 +82,7 @@ end
 begin
   logs = rds.describe_db_log_files({db_instance_identifier: instance_identifier})[0]
 rescue Exception => e
+  puts 'Deu bosta'
   puts "Error: [#{e.message}]"
   exit 1
 end
